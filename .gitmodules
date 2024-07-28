@@ -1,0 +1,3 @@
+[submodule "engine/glfw/glfw"]
+	path = engine/glfw/glfw
+	url = https://github.com/2Bro-Games/glfw
