@@ -1,5 +1,6 @@
-#include <stdio.h>
+#ifndef BROTHERHOOD_H
+#define BROTHERHOOD_H
 
-void say_hello() {
-    printf("Hello, from Brotherhood!\n");
-}
+#include "Application.h"
+
+#endif // !BROTHERHOOD_H
