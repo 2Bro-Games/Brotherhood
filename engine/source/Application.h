@@ -2,12 +2,17 @@
 #define APPLICATION_H
 
 namespace Brotherhood {
+	class Window;
+
 	class Application {
 	public:
-		Application() = default;
-		~Application() = default;
+		Application();
+		~Application();
 
 		void Run();
+
+	private:
+		Window* m_Window;
 	};
 
 	Application* CreateApplication();
