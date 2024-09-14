@@ -1,5 +1,10 @@
 #include "CustomWindow.h"
+
 #include <format>
+
+#include "core/event/KeyEvent.h"
+#include "core/event/MouseEvent.h"
+#include "core/event/ApplicationEvent.h"
 
 namespace Brotherhood {
 	static void GLFWErrorCallback(int error, const char* description) {
@@ -32,6 +37,70 @@ namespace Brotherhood {
 
 		glfwSetWindowUserPointer(m_pWindow, &m_WindowStruct);
 		SetVSync(false);
+
+		glfwSetWindowSizeCallback(m_pWindow, [](GLFWwindow* window, int width, int height) {
+            auto windowStruct = static_cast<WindowStruct*>(glfwGetWindowUserPointer(window));
+            windowStruct->m_nWidth = width;
+            windowStruct->m_nHeight = height;
+
+            WindowResizeEvent event(static_cast<unsigned int>(width), static_cast<unsigned int>(height));
+            windowStruct->m_EventCallback(event);
+        });
+
+        glfwSetWindowCloseCallback(m_pWindow, [](GLFWwindow* window) {
+            auto windowStruct = static_cast<WindowStruct*>(glfwGetWindowUserPointer(window));
+            WindowCloseEvent event;
+            windowStruct->m_EventCallback(event);
+        });
+
+        glfwSetKeyCallback(m_pWindow, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+            auto windowStruct = static_cast<WindowStruct*>(glfwGetWindowUserPointer(window));
+            switch (action) {
+                case GLFW_PRESS: {
+                    KeyPressedEvent event(key, false);
+                    windowStruct->m_EventCallback(event);
+                    break;
+                }
+                case GLFW_RELEASE: {
+                    KeyReleasedEvent event(key);
+                    windowStruct->m_EventCallback(event);
+                    break;
+                }
+                case GLFW_REPEAT: {
+                    KeyPressedEvent event(key, true);
+                    windowStruct->m_EventCallback(event);
+                    break;
+                }
+            }
+        });
+
+        glfwSetMouseButtonCallback(m_pWindow, [](GLFWwindow* window, int button, int action, int mods) {
+            auto windowStruct = static_cast<WindowStruct*>(glfwGetWindowUserPointer(window));
+            switch (action) {
+                case GLFW_PRESS : {
+                    MouseButtonPressedEvent event(button);
+                    windowStruct->m_EventCallback(event);
+                    break;
+                }
+                case GLFW_RELEASE : {
+                    MouseButtonReleasedEvent event(button);
+                    windowStruct->m_EventCallback(event);
+                    break;
+                }
+            }
+        });
+
+        glfwSetScrollCallback(m_pWindow, [](GLFWwindow* window, double xOffset, double yOffset) {
+            auto windowStruct = static_cast<WindowStruct*>(glfwGetWindowUserPointer(window));
+            MouseScrolledEvent event(static_cast<float>(xOffset), static_cast<float>(yOffset));
+            windowStruct->m_EventCallback(event);
+        });
+
+        glfwSetCursorPosCallback(m_pWindow, [](GLFWwindow* window, double xPos, double yPos) {
+            auto windowStruct = static_cast<WindowStruct*>(glfwGetWindowUserPointer(window));
+            MouseMovedEvent event (static_cast<float>(xPos), static_cast<float>(yPos));
+            windowStruct->m_EventCallback(event);
+        });
 	}
 
 	void CustomWindow::Shutdown() {
@@ -41,10 +110,6 @@ namespace Brotherhood {
 
 	void CustomWindow::OnUpdate() {
 		glfwPollEvents();
-	}
-
-	bool CustomWindow::ShouldClose() {
-		return glfwWindowShouldClose(m_pWindow);
 	}
 
 	void CustomWindow::SetVSync(bool enabled) {

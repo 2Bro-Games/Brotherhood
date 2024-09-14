@@ -2,7 +2,7 @@
 #define CUSTOM_WINDOW_H
 
 #include <GLFW/glfw3.h>
-#include "../Window.h"
+#include "platform/Window.h"
 
 namespace Brotherhood {
 	class CustomWindow : public Window {
@@ -11,10 +11,13 @@ namespace Brotherhood {
 		virtual ~CustomWindow();
 
 		virtual void OnUpdate() override;
-		virtual bool ShouldClose() override;
 
 		inline unsigned int GetWidth() const override { return m_WindowStruct.m_nWidth; }
 		inline unsigned int GetHeight() const override { return m_WindowStruct.m_nHeight; }
+
+		inline void SetEventCallback(const EventCallbackFn& callback) override {
+			m_WindowStruct.m_EventCallback = callback;
+		}
 
 		void SetVSync(bool enabled) override;
 		bool IsVSync() const override;
