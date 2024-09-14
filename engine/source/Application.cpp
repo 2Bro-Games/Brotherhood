@@ -2,10 +2,12 @@
 #include "platform/Window.h"
 #include "core/event/KeyEvent.h"
 #include "core/event/ApplicationEvent.h"
+#include "core/logger/Log.h"
 
 #include <iostream>
 
 Brotherhood::Application::Application() {
+	Log::Init();
 	m_Window = Window::Create();
 	m_Window->SetEventCallback(BIND_EVENT_FN(Application::OnEvent));
 }
@@ -14,7 +16,7 @@ void Brotherhood::Application::OnEvent(Event& e) {
 	EventDispatcher dispatcher(e);
 	dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(Application::OnWindowClose));
 	dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT_FN(Application::OnWindowResize));
-	std::cout << e << std::endl;
+	BROTHER_CORE_TRACE(e.ToString())
 }
 
 Brotherhood::Application::~Application() {

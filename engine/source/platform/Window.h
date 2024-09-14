@@ -6,8 +6,6 @@
 #include "core/event/Event.h"
 
 struct GLFWwindow;
-typedef void (* GLFWframebuffersizefun)(GLFWwindow* window, int width, int height);
-typedef void (* GLFWwindowclosefun)(GLFWwindow* window);
 
 namespace Brotherhood {
 	class Window {
@@ -31,7 +29,7 @@ namespace Brotherhood {
 			unsigned int m_nHeight;
 			bool m_bVSync;
 
-			WindowStruct(const std::string& title = "Victory",
+			WindowStruct(const std::string& title = "Brother",
 				unsigned int width = 1280, unsigned int height = 720)
 				: m_sTitle(title), m_nWidth(width)
 				, m_nHeight(height), m_bVSync(false) {}
