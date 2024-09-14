@@ -2,7 +2,7 @@
 #define CUSTOM_INPUT_H
 
 #include "core/Application.h"
-#include "event/Input.h"
+#include "core/event/Input.h"
 
 #include <glfw/glfw3.h>
 

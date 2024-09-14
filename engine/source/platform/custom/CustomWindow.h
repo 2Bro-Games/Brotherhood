@@ -2,7 +2,7 @@
 #define CUSTOM_WINDOW_H
 
 #include <GLFW/glfw3.h>
-#include "platform/Window.h"
+#include "../Window.h"
 
 namespace Brotherhood {
 	class CustomWindow : public Window {
