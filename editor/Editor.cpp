@@ -1,5 +1,6 @@
 #include "Brotherhood.h"
 
-int main() {
-    say_hello();
+Brotherhood::Application* Brotherhood::CreateApplication() {
+	Brotherhood::Application* app = new Brotherhood::Application();
+	return app;
 }
