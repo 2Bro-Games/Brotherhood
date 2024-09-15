@@ -2,12 +2,10 @@
 #include "platform/Window.h"
 #include "core/event/KeyEvent.h"
 #include "core/event/ApplicationEvent.h"
-#include "core/logger/Log.h"
 
 #include <iostream>
 
 Brotherhood::Application::Application() {
-	Log::Init();
 	m_Window = Window::Create();
 	m_Window->SetEventCallback(BIND_EVENT_FN(Application::OnEvent));
 }
@@ -16,7 +14,14 @@ void Brotherhood::Application::OnEvent(Event& e) {
 	EventDispatcher dispatcher(e);
 	dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(Application::OnWindowClose));
 	dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT_FN(Application::OnWindowResize));
-	BROTHER_CORE_TRACE(e.ToString())
+
+	for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend();) {
+		(*it)->OnEvent(e);
+		if (e.Handled) {
+			break;
+		}
+		++it;
+	}
 }
 
 Brotherhood::Application::~Application() {
@@ -25,10 +30,13 @@ Brotherhood::Application::~Application() {
 
 void Brotherhood::Application::Run() {
 	while (m_IsRunning) {
+		m_Window->OnUpdate();
 		if (m_IsMinimized) {
 			continue;
 		}
-		m_Window->OnUpdate();
+		for (auto layer : m_LayerStack) {
+			layer->OnUpdate();
+		}
 	}
 }
 
