@@ -2,8 +2,10 @@
 #define ENTRY_POINT_H
 
 #include "Application.h"
+#include "core/logger/Log.h"
 
 int main(int argc, char** argv) {
+	Brotherhood::Log::Init();
 	auto app = Brotherhood::CreateApplication();
 	app->Run();
 	delete app;
