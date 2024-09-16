@@ -1,7 +1,7 @@
 #ifndef LAYER_H
 #define LAYER_H
 
-#include "core/event/Event.h"
+#include "Core/Event/Event.h"
 
 namespace Brotherhood {
 	class Layer {

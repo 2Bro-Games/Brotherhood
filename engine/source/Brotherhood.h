@@ -2,7 +2,7 @@
 #define BROTHERHOOD_H
 
 #include "Application.h"
-#include "core/logger/Log.h"
-#include "core/layer/LayerStack.h"
+#include "Core/Logger/Log.h"
+#include "Core/Layer/LayerStack.h"
 
 #endif // !BROTHERHOOD_H

@@ -5,7 +5,7 @@
 #include <string>
 #include <sstream>
 
-#include "core/Common.h"
+#include "Core/Common.h"
 
 namespace Brotherhood {
 	enum class EventType {

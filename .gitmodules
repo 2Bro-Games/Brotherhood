@@ -1,6 +1,6 @@
-[submodule "engine/extern/glfw"]
-	path = engine/extern/glfw
+[submodule "Engine/Extern/glfw"]
+	path = Engine/Extern/glfw
 	url = https://github.com/2Bro-Games/glfw.git
-[submodule "engine/extern/glm"]
-	path = engine/extern/glm
+[submodule "Engine/Extern/glm"]
+	path = Engine/Extern/glm
 	url = https://github.com/2Bro-Games/glm.git

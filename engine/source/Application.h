@@ -1,7 +1,7 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#include "core/layer/LayerStack.h"
+#include "Core/Layer/LayerStack.h"
 
 int main(int argc, char** argv);
 
@@ -10,6 +10,7 @@ namespace Brotherhood {
 	class WindowCloseEvent;
 	class WindowResizeEvent;
 	class Window;
+	class RendererAPI;
 
 	class Application {
 		friend int ::main(int argc, char** argv);
@@ -40,9 +41,10 @@ namespace Brotherhood {
 		LayerStack m_LayerStack;
 
 		Window* m_Window;
-
 		bool m_IsRunning{ true };
 		bool m_IsMinimized{ false };
+
+		std::unique_ptr<RendererAPI> m_Renderer;
 	};
 
 	Application* CreateApplication();

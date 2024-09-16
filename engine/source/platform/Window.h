@@ -3,7 +3,7 @@
 
 #include <string>
 #include <functional>
-#include "core/event/Event.h"
+#include "Core/Event/Event.h"
 
 struct GLFWwindow;
 

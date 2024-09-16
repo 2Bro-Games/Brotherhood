@@ -1,13 +1,15 @@
 #include "Application.h"
-#include "platform/Window.h"
-#include "core/event/KeyEvent.h"
-#include "core/event/ApplicationEvent.h"
+#include "Platform/Window.h"
+#include "Core/Event/KeyEvent.h"
+#include "Core/Event/ApplicationEvent.h"
+#include "Render/RendererAPI.h"
 
 #include <iostream>
 
 Brotherhood::Application::Application() {
 	m_Window = Window::Create();
 	m_Window->SetEventCallback(BIND_EVENT_FN(Application::OnEvent));
+	m_Renderer = RendererAPI::Create(RenderAPI::VULKAN);
 }
 
 void Brotherhood::Application::OnEvent(Event& e) {
