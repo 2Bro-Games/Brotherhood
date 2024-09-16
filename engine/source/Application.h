@@ -44,7 +44,7 @@ namespace Brotherhood {
 		bool m_IsRunning{ true };
 		bool m_IsMinimized{ false };
 
-		std::unique_ptr<RendererAPI> m_Renderer;
+		RendererAPI* m_Renderer;
 	};
 
 	Application* CreateApplication();

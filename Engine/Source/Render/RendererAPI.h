@@ -2,6 +2,7 @@
 #define RENDERER_API_H
 
 #include <vulkan/vulkan.h>
+#include <exception>
 #include <memory>
 
 namespace Brotherhood {
@@ -12,12 +13,10 @@ namespace Brotherhood {
 	};
 
 	class RendererAPI {
-		friend class std::unique_ptr<RendererAPI>;
-
 	public:
-		static std::unique_ptr<RendererAPI> Create(RenderAPI api);
+		static RendererAPI* Create(RenderAPI api);
 
-		RendererAPI() = delete;
+		RendererAPI() = default;
 		virtual ~RendererAPI() = default;
 	};
 }

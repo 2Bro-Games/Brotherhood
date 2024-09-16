@@ -27,6 +27,8 @@ void Brotherhood::Application::OnEvent(Event& e) {
 }
 
 Brotherhood::Application::~Application() {
+	// Get rid of this
+	delete m_Renderer;
 	delete m_Window;
 }
 
@@ -36,7 +38,7 @@ void Brotherhood::Application::Run() {
 		if (m_IsMinimized) {
 			continue;
 		}
-		for (auto layer : m_LayerStack) {
+		for (auto& layer : m_LayerStack) {
 			layer->OnUpdate();
 		}
 	}
