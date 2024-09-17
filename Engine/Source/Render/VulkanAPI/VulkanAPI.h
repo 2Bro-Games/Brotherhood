@@ -6,6 +6,7 @@
 
 #include "Render/RendererAPI.h"
 #include "VulkanCommon.h"
+#include "Extern/vulkan/vk_mem_alloc.h"
 
 class RendererAPI;
 
@@ -82,6 +83,16 @@ namespace Brotherhood {
 					m_PhysicalDevice = phDevice;
 				}
 			}
+
+			if (!m_PhysicalDevice) {
+				throw std::exception("Physical Device was not picked");
+			}
+
+			//if (!PickQueueIndecies(m_PhysicalDevice, surface_)) {
+			//	throw std::exception("Graphics Family Queue was not found");
+			//}
+
+			DefineMaxSampleCount();
 		};
 
 		uint32_t RateDeviceSuitability(VkPhysicalDevice phDevice_) {
@@ -144,7 +155,6 @@ namespace Brotherhood {
 			std::vector<float> queuePriorities{ 1.f };
 			std::vector<VkDeviceQueueCreateInfo> queueCIs;
 			queueCIs.reserve(uniqueIndices.size());
-
 			VkDeviceQueueCreateInfo queueCI{};
 			queueCI.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			queueCI.queueCount = 1;
@@ -178,12 +188,47 @@ namespace Brotherhood {
 			BROTHER_CORE_TRACE("Vulkan device created")
 		};
 
+		void DefineMaxSampleCount() {
+			VkPhysicalDeviceProperties physicalDeviceProperties;
+			vkGetPhysicalDeviceProperties(m_PhysicalDevice, &physicalDeviceProperties);
+
+			VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+			if (counts & VK_SAMPLE_COUNT_64_BIT) { m_MaxSampleCount = VK_SAMPLE_COUNT_64_BIT; return; }
+			if (counts & VK_SAMPLE_COUNT_32_BIT) { m_MaxSampleCount = VK_SAMPLE_COUNT_32_BIT; return; }
+			if (counts & VK_SAMPLE_COUNT_16_BIT) { m_MaxSampleCount = VK_SAMPLE_COUNT_16_BIT; return; }
+			if (counts & VK_SAMPLE_COUNT_8_BIT) { m_MaxSampleCount = VK_SAMPLE_COUNT_8_BIT; return; }
+			if (counts & VK_SAMPLE_COUNT_4_BIT) { m_MaxSampleCount = VK_SAMPLE_COUNT_4_BIT; return; }
+			if (counts & VK_SAMPLE_COUNT_2_BIT) { m_MaxSampleCount = VK_SAMPLE_COUNT_2_BIT; return; }
+		}
+
+		void CreateVmaAllocator()
+		{
+			VmaVulkanFunctions vulkanFunctions = {};
+			vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+			vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
+			VmaAllocatorCreateInfo allocatorCreateInfo = {};
+			//allocatorCreateInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
+			allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_3;
+			allocatorCreateInfo.physicalDevice = m_PhysicalDevice;
+			allocatorCreateInfo.device = m_Device;
+			allocatorCreateInfo.instance = m_Instance;
+			allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
+
+			Utils::CheckVulkanResult(
+				vmaCreateAllocator(&allocatorCreateInfo, &m_Allocator),
+				"Vma allocator was not created");
+			BROTHER_CORE_TRACE("Vma allocator created")
+		}
+
 	private:
 		VkInstance m_Instance;
 		VkPhysicalDevice m_PhysicalDevice;
 		VkDevice m_Device;
+		VmaAllocator m_Allocator;
 
 		VulkanQueueIndices m_QueueIndices;
+		VkSampleCountFlagBits m_MaxSampleCount{ VK_SAMPLE_COUNT_1_BIT };
 	};
 }
 
