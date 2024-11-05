@@ -1,7 +1,7 @@
 #include "Application.h"
-#include "Core/Event/ApplicationEvent.h"
-#include "Platform/Window.h"
-#include "Render/RendererAPI.h"
+#include "core/event/ApplicationEvent.h"
+#include "platform/Window.h"
+#include "renderer/RendererAPI.h"
 
 #include <iostream>
 

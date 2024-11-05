@@ -1,7 +1,7 @@
 #include "RendererAPI.h"
-#include "Core/Logger/Log.h"
+#include "core/logger/Log.h"
 
-#include "VulkanAPI/VulkanAPI.h"
+#include "vulkan_api/VulkanAPI.h"
 
 #include <exception>
 

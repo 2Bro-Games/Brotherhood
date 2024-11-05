@@ -1,7 +1,7 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#include "Core/Layer/LayerStack.h"
+#include "core/layer/LayerStack.h"
 
 int main(int argc, char** argv);
 

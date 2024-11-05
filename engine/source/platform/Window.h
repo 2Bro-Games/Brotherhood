@@ -1,7 +1,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include "Core/Event/Event.h"
+#include "core/event/Event.h"
 #include <functional>
 #include <string>
 #include <utility>

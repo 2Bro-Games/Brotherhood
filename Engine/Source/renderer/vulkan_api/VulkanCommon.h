@@ -2,7 +2,7 @@
 #define VULKAN_COMMON_H
 
 #include <vulkan/vulkan.h>
-#include "Core/Logger/Log.h"
+#include "core/logger/Log.h"
 
 namespace Utils {
 	inline void VkCheck(const VkResult result, const std::string&& sMessage) {

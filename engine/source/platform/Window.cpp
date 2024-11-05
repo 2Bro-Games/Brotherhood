@@ -1,6 +1,6 @@
 #include "Window.h"
 
-#include "Custom/GLFWWindow.h"
+#include "glfw_window/GLFWWindow.h"
 
 Brotherhood::Window* Brotherhood::Window::Create(
 	const Brotherhood::Window::WindowStruct& windowStruct) {
