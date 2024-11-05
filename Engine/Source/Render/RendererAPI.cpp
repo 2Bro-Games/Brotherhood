@@ -3,18 +3,23 @@
 
 #include "VulkanAPI/VulkanAPI.h"
 
-Brotherhood::RendererAPI* Brotherhood::RendererAPI::Create(Brotherhood::RenderAPI api)
-{
-	switch (api)
-	{
-	case Brotherhood::NONE:
-	case Brotherhood::VULKAN:
-		return new VulkanAPI;
-	default:
-		BROTHER_CORE_ERROR("Unknown Render API");
-		break;
+#include <exception>
+
+namespace Brotherhood {
+	static Renderer* s_pRenderer = nullptr;
+
+	void Renderer::Create(const RendererAPI api /* = VULKAN */) {
+		switch (api) {
+			case RendererAPI::NONE:
+			case RendererAPI::VULKAN:
+				s_pRenderer = new VulkanAPI;
+			default:
+				BROTHER_CORE_ERROR("Unknown Render API");
+				break;
+		}
 	}
 
-	static_assert(1!=0);
-	return nullptr;
-}
+	void Renderer::Destroy() {
+		delete s_pRenderer;
+	}
+} // Brotherhood

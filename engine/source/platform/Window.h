@@ -1,9 +1,10 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include <string>
-#include <functional>
 #include "Core/Event/Event.h"
+#include <functional>
+#include <string>
+#include <utility>
 
 struct GLFWwindow;
 
@@ -20,7 +21,7 @@ namespace Brotherhood {
 		virtual unsigned int GetHeight() const = 0;
 
 		virtual void SetEventCallback(const EventCallbackFn& callback) = 0;
-		virtual void SetVSync(bool enabled) = 0;
+		virtual void SetVSync(const bool enabled) = 0;
 		virtual bool IsVSync() const = 0;
 
 		struct WindowStruct {
@@ -29,15 +30,21 @@ namespace Brotherhood {
 			unsigned int m_nHeight;
 			bool m_bVSync;
 
-			WindowStruct(const std::string& title = "Brother",
-				unsigned int width = 1280, unsigned int height = 720)
-				: m_sTitle(title), m_nWidth(width)
-				, m_nHeight(height), m_bVSync(false) {}
+			WindowStruct(
+				std::string title = "Brother",
+				const unsigned int width = 1280,
+				const unsigned int height = 720)
+				: m_sTitle(std::move(title))
+				, m_nWidth(width)
+				, m_nHeight(height)
+				, m_bVSync(false) {
+			}
 
 			EventCallbackFn m_EventCallback;
 		};
 
 		static Window* Create(const WindowStruct& windowStruct = WindowStruct());
+		static void Destroy(Window* pWindow);
 
 	protected:
 		WindowStruct m_WindowStruct;

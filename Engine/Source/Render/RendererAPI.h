@@ -2,23 +2,22 @@
 #define RENDERER_API_H
 
 #include <vulkan/vulkan.h>
-#include <exception>
 #include <memory>
 
 namespace Brotherhood {
-	enum RenderAPI
-	{
+	enum class RendererAPI {
 		NONE = 0,
 		VULKAN
 	};
 
-	class RendererAPI {
+	class Renderer {
 	public:
-		static RendererAPI* Create(RenderAPI api);
+		Renderer() = default;
+		virtual ~Renderer() = default;
 
-		RendererAPI() = default;
-		virtual ~RendererAPI() = default;
+		static void Create(const RendererAPI api = RendererAPI::VULKAN);
+		static void Destroy();
 	};
-}
+} // Brotherhood
 
 #endif // !RENDERER_API_H

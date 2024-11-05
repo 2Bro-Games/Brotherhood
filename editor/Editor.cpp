@@ -1,9 +1,9 @@
 #include "Brotherhood.h"
 
-class ExampleLayer : public Brotherhood::Layer {
+class ExampleLayer final : public Brotherhood::Layer {
 public:
-	ExampleLayer()
-		: Layer("Example") {}
+	ExampleLayer() : Layer("Example") {
+	}
 
 	void OnUpdate() override {
 	}
@@ -14,7 +14,7 @@ public:
 };
 
 Brotherhood::Application* Brotherhood::CreateApplication() {
-	Brotherhood::Application* app = new Brotherhood::Application();
-	app->PushLayer<ExampleLayer>();
-	return app;
+	const auto pApplication = new Application();
+	pApplication->PushLayer<ExampleLayer>();
+	return pApplication;
 }

@@ -6,9 +6,9 @@
 
 #include "Render/RendererAPI.h"
 #include "VulkanCommon.h"
-#include "Extern/vulkan/vk_mem_alloc.h"
+#include "vk_mem_alloc.h"
 
-class RendererAPI;
+class Renderer;
 
 namespace Brotherhood {
 	enum class QueueIndex {
@@ -44,7 +44,7 @@ namespace Brotherhood {
 		uint32_t dummy{ UINT16_MAX };
 	};
 
-	class VulkanAPI final : public RendererAPI {
+	class VulkanAPI final : public Renderer {
 	public:
 		VulkanAPI();
 		virtual ~VulkanAPI();
@@ -63,7 +63,7 @@ namespace Brotherhood {
 			instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 			instanceCreateInfo.pApplicationInfo = &applicationInfo;
 
-			Utils::CheckVulkanResult(vkCreateInstance(&instanceCreateInfo, nullptr, &m_Instance),
+			Utils::VkCheck(vkCreateInstance(&instanceCreateInfo, nullptr, &m_Instance),
 				"Vulkan instance not created");
 			BROTHER_CORE_TRACE("Vulkan instance created")
 		};
@@ -94,6 +94,11 @@ namespace Brotherhood {
 
 			DefineMaxSampleCount();
 		};
+
+		bool PickQueueIndecies(VkPhysicalDevice pDevice, VkSurfaceKHR pSurface)
+		{
+
+		}
 
 		uint32_t RateDeviceSuitability(VkPhysicalDevice phDevice_) {
 			VkPhysicalDeviceFeatures features;
@@ -182,7 +187,7 @@ namespace Brotherhood {
 			deviceCI.ppEnabledExtensionNames = extensions.data();
 			deviceCI.pEnabledFeatures = &features;
 
-			Utils::CheckVulkanResult(
+			Utils::VkCheck(
 				vkCreateDevice(m_PhysicalDevice, &deviceCI, nullptr, &m_Device),
 				"Device was not created");
 			BROTHER_CORE_TRACE("Vulkan device created")
@@ -215,7 +220,7 @@ namespace Brotherhood {
 			allocatorCreateInfo.instance = m_Instance;
 			allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
 
-			Utils::CheckVulkanResult(
+			Utils::VkCheck(
 				vmaCreateAllocator(&allocatorCreateInfo, &m_Allocator),
 				"Vma allocator was not created");
 			BROTHER_CORE_TRACE("Vma allocator created")

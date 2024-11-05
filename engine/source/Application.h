@@ -10,7 +10,7 @@ namespace Brotherhood {
 	class WindowCloseEvent;
 	class WindowResizeEvent;
 	class Window;
-	class RendererAPI;
+	class Renderer;
 
 	class Application {
 		friend int ::main(int argc, char** argv);
@@ -21,13 +21,17 @@ namespace Brotherhood {
 
 		template<typename T>
 		void PushLayer() {
-			static_assert(std::is_base_of<Layer, T>::value, "Pushed type is not subclass of Layer!");
+			static_assert(
+				std::is_base_of_v<Layer, T>,
+				"Pushed type is not subclass of Layer!");
 			m_LayerStack.PushLayer(std::make_shared<T>());
 		}
 
 		template<typename T>
 		void PushOverlay() {
-			static_assert(std::is_base_of<Layer, T>::value, "Pushed type is not subclass of Layer!");
+			static_assert(
+				std::is_base_of_v<Layer, T>,
+				"Pushed type is not subclass of Layer!");
 			m_LayerStack.PushOverlay(std::make_shared<T>());
 		}
 
@@ -40,11 +44,10 @@ namespace Brotherhood {
 
 		LayerStack m_LayerStack;
 
-		Window* m_Window;
-		bool m_IsRunning{ true };
-		bool m_IsMinimized{ false };
+		Window* m_pWindow;
 
-		RendererAPI* m_Renderer;
+		bool m_IsRunning { true };
+		bool m_IsMinimized { false };
 	};
 
 	Application* CreateApplication();

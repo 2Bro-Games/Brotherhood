@@ -9,5 +9,6 @@ elseif(CMAKE_BUILD_TYPE MATCHES Release)
     add_compile_definitions(DEBUG=0)
 endif()
 
+add_subdirectory(Extern)
 add_subdirectory(Engine)
 add_subdirectory(Editor)

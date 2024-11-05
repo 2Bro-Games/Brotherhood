@@ -1,60 +1,62 @@
 #include "Application.h"
-#include "Platform/Window.h"
-#include "Core/Event/KeyEvent.h"
 #include "Core/Event/ApplicationEvent.h"
+#include "Platform/Window.h"
 #include "Render/RendererAPI.h"
 
 #include <iostream>
 
-Brotherhood::Application::Application() {
-	m_Window = Window::Create();
-	m_Window->SetEventCallback(BIND_EVENT_FN(Application::OnEvent));
-	m_Renderer = RendererAPI::Create(RenderAPI::VULKAN);
-}
+namespace Brotherhood {
+	Application::Application() {
+		m_pWindow = Window::Create();
+		m_pWindow->SetEventCallback(BIND_EVENT_FN(Application::OnEvent));
 
-void Brotherhood::Application::OnEvent(Event& e) {
-	EventDispatcher dispatcher(e);
-	dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(Application::OnWindowClose));
-	dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT_FN(Application::OnWindowResize));
-
-	for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend();) {
-		(*it)->OnEvent(e);
-		if (e.Handled) {
-			break;
-		}
-		++it;
+		Renderer::Create(RendererAPI::VULKAN);
 	}
-}
 
-Brotherhood::Application::~Application() {
-	// Get rid of this
-	delete m_Renderer;
-	delete m_Window;
-}
+	void Application::OnEvent(Event& e) {
+		EventDispatcher dispatcher(e);
+		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(Application::OnWindowClose));
+		dispatcher.Dispatch<WindowResizeEvent>(
+			BIND_EVENT_FN(Application::OnWindowResize));
 
-void Brotherhood::Application::Run() {
-	while (m_IsRunning) {
-		m_Window->OnUpdate();
-		if (m_IsMinimized) {
-			continue;
-		}
-		for (auto& layer : m_LayerStack) {
-			layer->OnUpdate();
+		for (auto it = m_LayerStack.rbegin(); it != m_LayerStack.rend(); ++it) {
+			(*it)->OnEvent(e);
+			if (e.Handled) {
+				break;
+			}
 		}
 	}
-}
 
-bool Brotherhood::Application::OnWindowClose(WindowCloseEvent& e) {
-	m_IsRunning = false;
-	return true;
-}
+	Application::~Application() {
+		Renderer::Destroy();
+		Window::Destroy(m_pWindow);
+	}
 
-bool Brotherhood::Application::OnWindowResize(WindowResizeEvent& e) {
-	if (e.GetWidth() == 0 || e.GetHeight() == 0) {
-		m_IsMinimized = true;
+	void Application::Run() {
+		while (m_IsRunning) {
+			m_pWindow->OnUpdate();
+			if (m_IsMinimized) {
+				continue;
+			}
+			for (const auto& layer : m_LayerStack) {
+				layer->OnUpdate();
+			}
+		}
+	}
+
+	bool Application::OnWindowClose(WindowCloseEvent& e) {
+		m_IsRunning = false;
+		return true;
+	}
+
+	bool Application::OnWindowResize(WindowResizeEvent& e) {
+		if (e.GetWidth() == 0 || e.GetHeight() == 0) {
+			m_IsMinimized = true;
+			return true;
+		}
+
+		m_IsMinimized = false;
 		return false;
 	}
 
-	m_IsMinimized = false;
-	return false;
-}
+} // Brotherhood
