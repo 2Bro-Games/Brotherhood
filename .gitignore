@@ -4,6 +4,9 @@
 # vs
 .vs
 
+Extern
+Editor
+Engine
 # cmake
 build
 
