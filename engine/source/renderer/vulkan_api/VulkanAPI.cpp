@@ -13,7 +13,9 @@
 namespace Brotherhood {
 	VulkanAPI::VulkanAPI() {
 		CreateInstance();
+#ifdef DEBUG
 		CreateValidationLayer();
+#endif // DEBUG
 		PickPhysicalDevice();
 		CreateDevice();
 		CreateVmaAllocator();
@@ -21,14 +23,18 @@ namespace Brotherhood {
 	}
 
 	VulkanAPI::~VulkanAPI() {
+		vkDestroySwapchainKHR(m_pDevice, m_Swapchain, nullptr);
 		vmaDestroyAllocator(m_pAllocator);
 		vkDestroyDevice(m_pDevice, nullptr);
-		vkDestroySurfaceKHR(m_pInstance, m_pSurface, nullptr);
+		vkDestroySurfaceKHR(m_pInstance, m_Swapchain.Surface, nullptr);
+#ifdef DEBUG
 		DestroyValidationLayer();
+#endif // DEBUG
 		vkDestroyInstance(m_pInstance, nullptr);
 		BROTHER_CORE_TRACE("VulkanAPI deleted")
 	}
 
+#ifdef DEBUG
 	bool CheckValidationLayerSupport(const std::vector<const char*>& layers) {
 		uint32_t layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -49,6 +55,7 @@ namespace Brotherhood {
 		}
 		return true;
 	}
+#endif // DEBUG
 
 	void VulkanAPI::PickQueueIndices() {
 		uint32_t queueFamilyPropertiesCount { 0 };
@@ -81,7 +88,7 @@ namespace Brotherhood {
 			vkGetPhysicalDeviceSurfaceSupportKHR(
 				m_pPhysicalDevice,
 				nIndex,
-				m_pSurface,
+				m_Swapchain.Surface,
 				&presentSupport);
 			if (!m_Indices.Present.has_value() && presentSupport == VK_TRUE) {
 				m_Indices.Present = nIndex;
@@ -122,9 +129,11 @@ namespace Brotherhood {
 		const char** sNames { glfwGetRequiredInstanceExtensions(&nCount) };
 		std::ranges::copy_n(sNames, nCount, std::back_inserter(extensionNames));
 
+#ifdef DEBUG
 		if (CheckValidationLayerSupport(layerNames)) {
 			extensionNames.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		}
+#endif // DEBUG
 
 		VkInstanceCreateInfo instanceCreateInfo {};
 		instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -145,7 +154,7 @@ namespace Brotherhood {
 				m_pInstance,
 				static_cast<GLFWwindow*>(Renderer::s_pWindow->GetNativeWindow()),
 				nullptr,
-				&m_pSurface),
+				&m_Swapchain.Surface),
 			"Vulkan surface not created");
 		BROTHER_CORE_TRACE("Vulkan surface created")
 	}
@@ -223,7 +232,7 @@ namespace Brotherhood {
 			deviceExtensions.begin(),
 			deviceExtensions.end());
 
-		for (auto&& extension : availableExtensions) {
+		for (const auto& extension : availableExtensions) {
 			requiredExtensions.erase(extension.extensionName);
 			if (requiredExtensions.empty()) {
 				break;
@@ -311,6 +320,143 @@ namespace Brotherhood {
 		}
 	}
 
+	void VulkanAPI::ChooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& cap) {
+		uint32_t width { std::clamp(
+			Renderer::s_pWindow->GetWidth(),
+			cap.minImageExtent.width,
+			cap.maxImageExtent.width) };
+		uint32_t height { std::clamp(
+			Renderer::s_pWindow->GetHeight(),
+			cap.minImageExtent.height,
+			cap.maxImageExtent.height) };
+
+		m_Swapchain.Extent = { width, height };
+	}
+
+	void VulkanAPI::ChooseSwapchainSurfaceFormat() {
+		uint32_t surfaceFormatsCount { 0 };
+		vkGetPhysicalDeviceSurfaceFormatsKHR(
+			m_pPhysicalDevice,
+			m_Swapchain.Surface,
+			&surfaceFormatsCount,
+			nullptr);
+
+		Utils::Check(surfaceFormatsCount == 0, "Vulkan: Failed to get surface formats");
+
+		std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatsCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(
+			m_pPhysicalDevice,
+			m_Swapchain.Surface,
+			&surfaceFormatsCount,
+			surfaceFormats.data());
+
+		Utils::Check(surfaceFormats.empty(), "Vulkan: Failed to get surface formats");
+
+		for (const auto& format : surfaceFormats) {
+			if (format.format == VK_FORMAT_B8G8R8A8_UNORM
+				&& format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+				m_Swapchain.SurfaceFormat = format;
+				return;
+			}
+		}
+
+		Utils::Check(true, "Vulkan: Failed to get requied surface format");
+	}
+
+	void VulkanAPI::ChooseSwapchainPresentationModeFormat() {
+		uint32_t presentModesCount { 0 };
+		vkGetPhysicalDeviceSurfacePresentModesKHR(
+			m_pPhysicalDevice,
+			m_Swapchain.Surface,
+			&presentModesCount,
+			nullptr);
+
+		Utils::Check(presentModesCount == 0, "Vulkan: Failed to get present modes");
+
+		std::vector<VkPresentModeKHR> presentModes(presentModesCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(
+			m_pPhysicalDevice,
+			m_Swapchain.Surface,
+			&presentModesCount,
+			presentModes.data());
+
+		Utils::Check(presentModes.empty(), "Vulkan: Failed to get present modes");
+
+		for (const auto& mode : presentModes) {
+			if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
+				m_Swapchain.PresentMode = mode;
+				return;
+			}
+		}
+
+		Utils::Check(true, "Vulkan: Failed to get requied present modes");
+	}
+
+	void VulkanAPI::ChooseSwapchainImageCount(const VkSurfaceCapabilitiesKHR& cap) {
+		m_Swapchain.ImageCount = cap.minImageCount + 1;
+		if (cap.maxImageCount > 0 && m_Swapchain.ImageCount > cap.maxImageCount) {
+			m_Swapchain.ImageCount = cap.maxImageCount;
+		}
+	}
+
+	void VulkanAPI::CreateSwapchain() {
+		VkSurfaceCapabilitiesKHR capabilities;
+		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+			m_pPhysicalDevice,
+			m_Swapchain.Surface,
+			&capabilities);
+
+		ChooseSwapchainExtent(capabilities);
+		ChooseSwapchainSurfaceFormat();
+		ChooseSwapchainPresentationModeFormat();
+		ChooseSwapchainImageCount(capabilities);
+
+		const auto& swapchain = m_Swapchain;
+		VkSwapchainCreateInfoKHR swapchainCreateInfo {};
+		swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapchainCreateInfo.flags = {};
+		swapchainCreateInfo.surface = m_Swapchain.Surface;
+		swapchainCreateInfo.minImageCount = m_Swapchain.ImageCount;
+		swapchainCreateInfo.imageFormat = m_Swapchain.SurfaceFormat.format;
+		swapchainCreateInfo.imageColorSpace = m_Swapchain.SurfaceFormat.colorSpace;
+		swapchainCreateInfo.imageExtent = m_Swapchain.Extent;
+		swapchainCreateInfo.imageArrayLayers = 1; // CHECK
+		swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // CHECK
+
+		const std::unordered_set<uint32_t> queueIndicesSet { m_Indices.Compute.value(),
+															 m_Indices.Graphics.value(),
+															 m_Indices.Present.value(),
+															 m_Indices.Transfer.value() };
+
+		const std::vector<uint32_t> queueIndicesVec(
+			queueIndicesSet.begin(),
+			queueIndicesSet.end());
+
+		swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		swapchainCreateInfo.queueFamilyIndexCount =
+			static_cast<uint32_t>(queueIndicesVec.size());
+		swapchainCreateInfo.pQueueFamilyIndices = queueIndicesVec.data();
+		swapchainCreateInfo.preTransform = capabilities.currentTransform;
+		swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		swapchainCreateInfo.presentMode = m_Swapchain.PresentMode;
+		swapchainCreateInfo.clipped = VK_TRUE;
+		swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
+
+		Utils::VkCheck(
+			vkCreateSwapchainKHR(m_pDevice, &swapchainCreateInfo, nullptr, m_Swapchain),
+			"Vulkan: Failed to create swapchain");
+		BROTHER_CORE_TRACE("Vulkan swapchain created")
+
+		uint32_t imageCount;
+		vkGetSwapchainImagesKHR(m_pDevice, m_Swapchain, &imageCount, nullptr);
+		m_Swapchain.Images.resize(imageCount);
+		vkGetSwapchainImagesKHR(
+			m_pDevice,
+			m_Swapchain,
+			&imageCount,
+			m_Swapchain.Images.data());
+	}
+
 	void VulkanAPI::CreateVmaAllocator() {
 		VmaVulkanFunctions vulkanFunctions = {};
 		vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
@@ -330,6 +476,7 @@ namespace Brotherhood {
 		BROTHER_CORE_TRACE("Vma allocator created")
 	}
 
+#ifdef DEBUG
 	void VulkanAPI::CreateValidationLayer() {
 		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo {};
 		debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -359,4 +506,5 @@ namespace Brotherhood {
 			destroyDebugUtilsMessengerEXT(m_pInstance, m_pDebugMessenger, nullptr);
 		}
 	}
+#endif // DEBUG
 } // Brotherhood

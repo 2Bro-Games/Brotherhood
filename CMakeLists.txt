@@ -4,9 +4,11 @@ project(Brotherhood)
 set(CMAKE_CXX_STANDARD 20)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-    add_compile_definitions(DEBUG=1)
+    message(______________DEBUG______________)
+    add_compile_definitions(DEBUG)
 elseif(CMAKE_BUILD_TYPE MATCHES Release)
-    add_compile_definitions(DEBUG=0)
+    message(______________RELEASE______________)
+    add_compile_definitions(NDEBUG)
 endif()
 
 add_subdirectory(extern)

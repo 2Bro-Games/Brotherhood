@@ -9,7 +9,7 @@ build
 
 # clion
 .idea
-out
+out_*
 
 # default
 CMakeLists.txt.user

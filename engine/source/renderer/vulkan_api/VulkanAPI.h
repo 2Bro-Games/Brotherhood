@@ -2,6 +2,7 @@
 #define VULKAN_API_H
 
 #include <optional>
+#include <vector>
 
 #include "renderer/RendererAPI.h"
 
@@ -23,22 +24,50 @@ namespace Brotherhood {
 
 		void PickPhysicalDevice();
 		void PickQueueIndices();
-		static uint32_t RateDeviceSuitability(VkPhysicalDevice pPhDevice_);
 		void CreateDevice();
-
 		void DefineMaxSampleCount();
+
+		void ChooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& cap);
+		void ChooseSwapchainSurfaceFormat();
+		void ChooseSwapchainPresentationModeFormat();
+		void ChooseSwapchainImageCount(const VkSurfaceCapabilitiesKHR& cap);
+		void CreateSwapchain();
 
 		void CreateVmaAllocator();
 
+		static uint32_t RateDeviceSuitability(VkPhysicalDevice pPhDevice_);
+
+#ifdef DEBUG
 		void CreateValidationLayer();
 		void DestroyValidationLayer();
+#endif // DEBUG
 
 	private:
 		VkInstance m_pInstance { nullptr };
 		VkPhysicalDevice m_pPhysicalDevice { nullptr };
 		VkDevice m_pDevice { nullptr };
 
-		VkSurfaceKHR m_pSurface { nullptr };
+		struct {
+			VkSurfaceKHR Surface { nullptr };
+			VkSwapchainKHR Swapchain { nullptr };
+			uint32_t ImageCount;
+
+			VkPresentModeKHR PresentMode;
+			VkSurfaceFormatKHR SurfaceFormat;
+			VkExtent2D Extent;
+
+			std::vector<VkImage> Images;
+			std::vector<VkImageView> ImageViews;
+			std::vector<VkFramebuffer> FrameBuffer;
+
+			operator VkSwapchainKHR() const {
+				return Swapchain;
+			}
+
+			operator VkSwapchainKHR*() {
+				return &Swapchain;
+			}
+		} m_Swapchain;
 
 		VmaAllocator m_pAllocator { nullptr };
 
@@ -51,7 +80,9 @@ namespace Brotherhood {
 
 		VkSampleCountFlagBits m_MaxSampleCount { VK_SAMPLE_COUNT_1_BIT };
 
+#ifdef DEBUG
 		VkDebugUtilsMessengerEXT m_pDebugMessenger { nullptr };
+#endif // DEBUG
 	};
 }
 #endif // !VULKAN_API_H
