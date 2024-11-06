@@ -7,10 +7,10 @@
 
 namespace Brotherhood {
 	Application::Application() {
-		m_pWindow = Window::Create();
+		m_pWindow = Window::Init();
 		m_pWindow->SetEventCallback(BIND_EVENT_FN(Application::OnEvent));
 
-		Renderer::Create(RendererAPI::VULKAN);
+		Renderer::Init(m_pWindow, RendererAPI::VULKAN);
 	}
 
 	void Application::OnEvent(Event& e) {

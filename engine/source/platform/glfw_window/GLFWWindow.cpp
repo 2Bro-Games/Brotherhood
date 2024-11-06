@@ -6,34 +6,25 @@
 #include "core/event/KeyEvent.h"
 #include "core/event/MouseEvent.h"
 
-static void GLFWErrorCallback(int error, const char* description) {
-	BROTHER_CORE_ERROR(std::format("GLFW Error ({}): {}", error, description));
-}
-
 namespace Brotherhood {
-	GLFWWindow::GLFWWindow(const WindowStruct& windowStruct) {
-		Init(windowStruct);
-	}
-
-	GLFWWindow::~GLFWWindow() {
-		Shutdown();
-	}
-
-	void GLFWWindow::Init(const WindowStruct& windowStruct) {
-		m_WindowStruct.m_sTitle = windowStruct.m_sTitle;
-		m_WindowStruct.m_nWidth = windowStruct.m_nWidth;
-		m_WindowStruct.m_nHeight = windowStruct.m_nHeight;
+	GLFWWindow::GLFWWindow(const WindowStruct& inWindowStruct)
+	{
+		m_WindowStruct.m_sTitle = inWindowStruct.m_sTitle;
+		m_WindowStruct.m_nWidth = inWindowStruct.m_nWidth;
+		m_WindowStruct.m_nHeight = inWindowStruct.m_nHeight;
 
 		if (!glfwInit()) {
 			throw std::runtime_error("GLFW Window is not inited");
 		}
-		glfwSetErrorCallback(GLFWErrorCallback);
+		glfwSetErrorCallback([](int error, const char* description) {
+			BROTHER_CORE_ERROR(std::format("GLFW Error ({}): {}", error, description));
+		});
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
 		m_pWindow = glfwCreateWindow(
-			static_cast<int>(windowStruct.m_nWidth),
-			static_cast<int>(windowStruct.m_nHeight),
+			static_cast<int>(inWindowStruct.m_nWidth),
+			static_cast<int>(inWindowStruct.m_nHeight),
 			m_WindowStruct.m_sTitle.c_str(),
 			nullptr,
 			nullptr);
@@ -44,7 +35,7 @@ namespace Brotherhood {
 		glfwSetWindowSizeCallback(
 			m_pWindow,
 			[](GLFWwindow* window, int width, int height) {
-				auto windowStruct =
+				const auto windowStruct =
 					static_cast<WindowStruct*>(glfwGetWindowUserPointer(window));
 				windowStruct->m_nWidth = width;
 				windowStruct->m_nHeight = height;
@@ -56,7 +47,7 @@ namespace Brotherhood {
 			});
 
 		glfwSetWindowCloseCallback(m_pWindow, [](GLFWwindow* window) {
-			auto windowStruct =
+			const auto windowStruct =
 				static_cast<WindowStruct*>(glfwGetWindowUserPointer(window));
 			WindowCloseEvent event;
 			windowStruct->m_EventCallback(event);
@@ -65,7 +56,7 @@ namespace Brotherhood {
 		glfwSetKeyCallback(
 			m_pWindow,
 			[](GLFWwindow* window, int key, int scancode, int action, int mods) {
-				auto windowStruct =
+				const auto windowStruct =
 					static_cast<WindowStruct*>(glfwGetWindowUserPointer(window));
 				switch (action) {
 					case GLFW_PRESS: {
@@ -83,6 +74,9 @@ namespace Brotherhood {
 						windowStruct->m_EventCallback(event);
 						break;
 					}
+					default: {
+						break;
+					};
 				}
 			});
 
@@ -102,13 +96,16 @@ namespace Brotherhood {
 						windowStruct->m_EventCallback(event);
 						break;
 					}
+					default: {
+						break;
+					};
 				}
 			});
 
 		glfwSetScrollCallback(
 			m_pWindow,
 			[](GLFWwindow* window, double xOffset, double yOffset) {
-				auto windowStruct =
+				const auto windowStruct =
 					static_cast<WindowStruct*>(glfwGetWindowUserPointer(window));
 				MouseScrolledEvent event(
 					static_cast<float>(xOffset),
@@ -126,7 +123,7 @@ namespace Brotherhood {
 			});
 	}
 
-	void GLFWWindow::Shutdown() {
+	GLFWWindow::~GLFWWindow() {
 		glfwDestroyWindow(m_pWindow);
 		glfwTerminate();
 	}

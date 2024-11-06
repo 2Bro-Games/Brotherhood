@@ -2,21 +2,21 @@
 #define CUSTOM_WINDOW_H
 
 #include "../Window.h"
+
 #include <GLFW/glfw3.h>
 
 namespace Brotherhood {
 	class GLFWWindow final : public Window {
 	public:
-		GLFWWindow(const WindowStruct& windowStruct);
-
+		GLFWWindow(const WindowStruct& inWindowStruct);
 		virtual ~GLFWWindow() override;
 
 		virtual void OnUpdate() override;
 
-		inline unsigned int GetWidth() const override {
+		inline uint32_t GetWidth() const override {
 			return m_WindowStruct.m_nWidth;
 		}
-		inline unsigned int GetHeight() const override {
+		inline uint32_t GetHeight() const override {
 			return m_WindowStruct.m_nHeight;
 		}
 
@@ -31,14 +31,12 @@ namespace Brotherhood {
 			return m_WindowStruct.m_bVSync;
 		}
 
-	private:
-		virtual void Init(const WindowStruct& windowStruct);
+		virtual void* GetNativeWindow() override {
+			return m_pWindow;
+		};
 
-		virtual void Shutdown();
-
 	private:
-		GLFWwindow* m_pWindow;
+		GLFWwindow* m_pWindow { nullptr };
 	};
 }
-
 #endif // !CUSTOM_WINDOW_H
