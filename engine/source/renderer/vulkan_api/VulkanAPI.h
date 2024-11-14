@@ -7,7 +7,6 @@
 #include "renderer/RendererAPI.h"
 
 #include "VulkanCommon.h"
-#include "vk_mem_alloc.h"
 
 #include "glfw/glfw3.h"
 
@@ -27,13 +26,20 @@ namespace Brotherhood {
 		void CreateDevice();
 		void DefineMaxSampleCount();
 
+		void CreateVmaAllocator();
+
 		void ChooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& cap);
 		void ChooseSwapchainSurfaceFormat();
 		void ChooseSwapchainPresentationModeFormat();
 		void ChooseSwapchainImageCount(const VkSurfaceCapabilitiesKHR& cap);
 		void CreateSwapchain();
 
-		void CreateVmaAllocator();
+		VkFormat FindSupportedFormat(
+			const std::vector<VkFormat>& formats,
+			const VkImageTiling tiling,
+			const VkFormatFeatureFlags features);
+		VkFormat FindDepthFormat();
+		void CreateFrameBuffers();
 
 		static uint32_t RateDeviceSuitability(VkPhysicalDevice pPhDevice_);
 
@@ -50,7 +56,9 @@ namespace Brotherhood {
 		struct {
 			VkSurfaceKHR Surface { nullptr };
 			VkSwapchainKHR Swapchain { nullptr };
+
 			uint32_t ImageCount;
+			uint32_t CurrentImage { 0 };
 
 			VkPresentModeKHR PresentMode;
 			VkSurfaceFormatKHR SurfaceFormat;
@@ -68,6 +76,21 @@ namespace Brotherhood {
 				return &Swapchain;
 			}
 		} m_Swapchain;
+
+		struct VkImageContainer {
+			VkImage Image;
+			VkImageView ImageView;
+			VmaAllocation Allocation;
+		};
+
+		struct {
+			uint32_t CurrentBuffer;
+
+			VkImageContainer Color;
+			VkImageContainer Depth;
+			std::vector<VkImageContainer> Resolve;
+
+		} m_FrameBuffers;
 
 		VmaAllocator m_pAllocator { nullptr };
 

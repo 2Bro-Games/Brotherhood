@@ -1,11 +1,12 @@
 #ifndef VULKAN_COMMON_H
 #define VULKAN_COMMON_H
 
-#include "core/Common.h"
-#include "core/logger/Log.h"
-
 #include <vulkan/vulkan.h>
-#include <iostream>
+
+#include "core/Common.h"
+#include "vk_mem_alloc.h"
+
+constexpr uint32_t g_BuffersCount = 2;
 
 namespace Utils {
 	inline void VkCheck(const VkResult result, std::string&& sMessage) {
@@ -18,7 +19,7 @@ namespace Utils {
 		VkDebugUtilsMessageTypeFlagsEXT messageType,
 		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 		void* pUserData) {
-		std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
+		BROTHER_ERROR(std::format("Validation layer: %s", pCallbackData->pMessage));
 		return VK_FALSE;
 	}
 #endif // DEBUG

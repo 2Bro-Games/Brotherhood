@@ -2,7 +2,10 @@
 #define COMMON_H
 
 #include "core/logger/Log.h"
+
+#include <format>
 #include <cassert>
+#include <unordered_map>
 
 #define BIT(x) (1 << x)
 #define BIND_EVENT_FN(fn)                                       \

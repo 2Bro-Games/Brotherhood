@@ -1,6 +1,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include <vulkan/vulkan_core.h>
 #include <string>
 
 namespace Brotherhood {

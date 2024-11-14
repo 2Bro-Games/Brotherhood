@@ -5,6 +5,7 @@
 #include <ranges>
 #include <unordered_set>
 #include <vector>
+#include <array>
 
 #include "core/logger/Log.h"
 
@@ -455,6 +456,173 @@ namespace Brotherhood {
 			m_Swapchain,
 			&imageCount,
 			m_Swapchain.Images.data());
+	}
+
+	VkFormat VulkanAPI::FindSupportedFormat(
+		const std::vector<VkFormat>& formats,
+		const VkImageTiling tiling,
+		const VkFormatFeatureFlags features) {
+		for (auto&& format : formats) {
+			VkFormatProperties props;
+			vkGetPhysicalDeviceFormatProperties(m_pPhysicalDevice, format, &props);
+
+			if (VK_IMAGE_TILING_LINEAR == tiling
+				&& (props.linearTilingFeatures & features) == features) {
+				return format;
+			} else if (
+				VK_IMAGE_TILING_OPTIMAL == tiling
+				&& (props.optimalTilingFeatures & features) == features) {
+				return format;
+			}
+		}
+
+		throw std::runtime_error("failed to find supported format!");
+	}
+
+	VkFormat VulkanAPI::FindDepthFormat() {
+		return FindSupportedFormat(
+			{ VK_FORMAT_D32_SFLOAT,
+			  VK_FORMAT_D32_SFLOAT_S8_UINT,
+			  VK_FORMAT_D24_UNORM_S8_UINT },
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	}
+
+	void VulkanAPI::CreateFrameBuffers() {
+		{
+			VkImageCreateInfo colorImageCreateInfo {};
+			colorImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			colorImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+			colorImageCreateInfo.extent.width = m_Swapchain.Extent.width;
+			colorImageCreateInfo.extent.height = m_Swapchain.Extent.height;
+			colorImageCreateInfo.extent.depth = 1;
+			colorImageCreateInfo.mipLevels = 1;
+			colorImageCreateInfo.arrayLayers = 1;
+			colorImageCreateInfo.format = m_Swapchain.SurfaceFormat.format;
+			colorImageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+			colorImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			colorImageCreateInfo.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT
+				| VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+			colorImageCreateInfo.samples = m_MaxSampleCount;
+			colorImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+			VmaAllocationCreateInfo colorAllocCreateInfo {};
+			colorAllocCreateInfo.flags = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE; // CHECK
+			colorAllocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+			VkResult result = vmaCreateImage(
+				m_pAllocator,
+				&colorImageCreateInfo,
+				&colorAllocCreateInfo,
+				&m_FrameBuffers.Color.Image,
+				&m_FrameBuffers.Color.Allocation,
+				nullptr);
+			Utils::VkCheck(
+				result,
+				std::format("Message: {}", "Vulkan: Failed to create color image"));
+
+			VkImageViewCreateInfo ColorViewInfo {};
+			ColorViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			ColorViewInfo.image = m_FrameBuffers.Color.Image;
+			ColorViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			ColorViewInfo.format = m_Swapchain.SurfaceFormat.format;
+			ColorViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			ColorViewInfo.subresourceRange.baseMipLevel = 0;
+			ColorViewInfo.subresourceRange.levelCount = 1;
+			ColorViewInfo.subresourceRange.baseArrayLayer = 0;
+			ColorViewInfo.subresourceRange.layerCount = 1;
+
+			result = vkCreateImageView(
+				m_pDevice,
+				&ColorViewInfo,
+				nullptr,
+				&m_FrameBuffers.Color.ImageView);
+			Utils::VkCheck(
+				result,
+				std::format("Message: {}", "Vulkan: Failed to create image view"));
+		}
+
+		{
+			VkImageCreateInfo depthImageCreateInfo {};
+			depthImageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+			depthImageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+			depthImageCreateInfo.extent.width = m_Swapchain.Extent.width;
+			depthImageCreateInfo.extent.height = m_Swapchain.Extent.height;
+			depthImageCreateInfo.extent.depth = 1;
+			depthImageCreateInfo.mipLevels = 1;
+			depthImageCreateInfo.arrayLayers = 1;
+			depthImageCreateInfo.format = FindDepthFormat();
+			depthImageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+			depthImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			depthImageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+			depthImageCreateInfo.samples = m_MaxSampleCount;
+			depthImageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+			VmaAllocationCreateInfo depthAllocCreateInfo {};
+			depthAllocCreateInfo.flags = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE; // CHECK
+			depthAllocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+			VkResult result = vmaCreateImage(
+				m_pAllocator,
+				&depthImageCreateInfo,
+				&depthAllocCreateInfo,
+				&m_FrameBuffers.Depth.Image,
+				&m_FrameBuffers.Depth.Allocation,
+				nullptr);
+			Utils::VkCheck(
+				result,
+				std::format("Message: {}", "Vulkan: Failed to create color image"));
+
+			VkImageViewCreateInfo DepthViewInfo {};
+			DepthViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			DepthViewInfo.image = m_FrameBuffers.Color.Image;
+			DepthViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			DepthViewInfo.format = FindDepthFormat();
+			DepthViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+			DepthViewInfo.subresourceRange.baseMipLevel = 0;
+			DepthViewInfo.subresourceRange.levelCount = 1;
+			DepthViewInfo.subresourceRange.baseArrayLayer = 0;
+			DepthViewInfo.subresourceRange.layerCount = 1;
+
+			result = vkCreateImageView(
+				m_pDevice,
+				&DepthViewInfo,
+				nullptr,
+				&m_FrameBuffers.Color.ImageView);
+			Utils::VkCheck(
+				result,
+				std::format("Message: {}", "Vulkan: Failed to create depth view"));
+		}
+
+		{
+			m_FrameBuffers.Resolve.reserve(m_Swapchain.ImageCount);
+			for (size_t nIndex = 0; nIndex < m_Swapchain.ImageCount; nIndex++) {
+				std::array<VkImageView, 3> attachments = {
+					m_FrameBuffers.Color.ImageView,
+					m_FrameBuffers.Depth.ImageView,
+					m_FrameBuffers.Resolve[nIndex].ImageView
+				};
+
+				VkFramebufferCreateInfo framebufferInfo {};
+				framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+				framebufferInfo.renderPass = PIPELINE.renderPass;
+				framebufferInfo.attachmentCount =
+					static_cast<uint32_t>(attachments.size());
+				framebufferInfo.pAttachments = attachments.data();
+				framebufferInfo.width = DEVICE.SWAPCHAIN.extent.width;
+				framebufferInfo.height = DEVICE.SWAPCHAIN.extent.height;
+				framebufferInfo.layers = 1;
+
+				if (vkCreateFramebuffer(
+						DEVICE,
+						&framebufferInfo,
+						nullptr,
+						&DEVICE.SWAPCHAIN.swapchainFrameBuffer[nIndex])
+					!= VK_SUCCESS) {
+					throw std::runtime_error("failed to create framebuffer!");
+				}
+			}
+		}
 	}
 
 	void VulkanAPI::CreateVmaAllocator() {
